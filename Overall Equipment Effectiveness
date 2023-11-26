@@ -1,0 +1,54 @@
+library(ggplot2)
+
+
+# Availability Calculation
+planned_production_time <- 480
+production_down_time <- 60
+availability <- (planned_production_time - production_down_time) / planned_production_time
+print("Availability")
+print(availability)
+
+# Performance Calculation
+number_of_units_produced <- 100
+cycle_time_goal <- 4.8
+actual_operation_time <- 420
+theoretical_max_output <- actual_operation_time / cycle_time_goal
+performance <- number_of_units_produced / theoretical_max_output
+print("Performance")
+print(performance)
+
+# Quality Calculation
+total_scrap <- 5
+quality <- (number_of_units_produced - total_scrap) / number_of_units_produced
+print("Quality")
+print(quality)
+
+# OEE Calculation
+oee <- availability * performance * quality 
+print("OEE")
+print(oee)
+
+
+# [Your existing code for OEE calculations]
+
+oee_data <- data.frame(
+  Metric = c("Availability", "Performance", "Quality", "OEE"),
+  Value = c(availability, performance, quality, oee)
+)
+
+# Set up the plot
+barplot(oee_data$Value, 
+        names.arg = oee_data$Metric, 
+        col = "lightgrey",  # Setting all bars to light grey
+        main = "Overall Equipment Effectiveness (OEE) and Components",
+        xlab = "Metric", 
+        ylab = "Value",
+        ylim = c(0, max(oee_data$Value) + 0.1)) # Adjust ylim as needed
+
+# Adding values above bars (optional)
+text(x = barplot(oee_data$Value, plot = FALSE), 
+     y = oee_data$Value + 0.02, # Adjust the position as needed
+     label = round(oee_data$Value, 2), 
+     pos = 3)
+
+
