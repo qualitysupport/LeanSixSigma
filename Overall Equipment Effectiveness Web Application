@@ -1,0 +1,84 @@
+library(shiny)
+
+# UI definition
+ui <- fluidPage(
+  titlePanel("OEE Calculator"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("planned_production_time", "Planned Production Time (minutes):", 480),
+      numericInput("production_down_time", "Production Down Time (minutes):", 60),
+      numericInput("number_of_units_produced", "Number of Units Produced:", 100),
+      numericInput("cycle_time_goal", "Cycle Time Goal (minutes per unit):", 4.8),
+      numericInput("total_scrap", "Total Scrap:", 5),
+      actionButton("calculate", "Calculate OEE")
+    ),
+    mainPanel(
+      plotOutput("oeePlot"),
+      verbatimTextOutput("report")  # Area to display the report
+    )
+  )
+)
+
+# Server logic
+server <- function(input, output) {
+  
+  calculateOEE <- eventReactive(input$calculate, {
+    planned_production_time <- input$planned_production_time
+    production_down_time <- input$production_down_time
+    number_of_units_produced <- input$number_of_units_produced
+    cycle_time_goal <- input$cycle_time_goal
+    total_scrap <- input$total_scrap
+    
+    availability <- (planned_production_time - production_down_time) / planned_production_time
+    theoretical_max_output <- (planned_production_time - production_down_time) / cycle_time_goal
+    performance <- number_of_units_produced / theoretical_max_output
+    quality <- (number_of_units_produced - total_scrap) / number_of_units_produced
+    oee <- availability * performance * quality
+    
+    oee_data <- data.frame(
+      Metric = c("Availability", "Performance", "Quality", "OEE"),
+      Value = c(availability, performance, quality, oee)
+    )
+    
+    return(oee_data)
+  })
+  
+  output$oeePlot <- renderPlot({
+    oee_data <- calculateOEE()
+    
+    barplot(oee_data$Value, 
+            names.arg = oee_data$Metric, 
+            col = "lightgrey",
+            main = "Overall Equipment Effectiveness (OEE) and Components",
+            xlab = "Metric", 
+            ylab = "Value",
+            ylim = c(0, max(oee_data$Value) + 0.1))
+  })
+  
+  output$report <- renderText({
+    if(input$calculate > 0){
+      oee_data <- calculateOEE()
+      
+      report_text <- paste(
+        "Report\n\n",
+        "Inputs:\n",
+        "Planned Production Time: ", input$planned_production_time, " minutes\n",
+        "Production Down Time: ", input$production_down_time, " minutes\n",
+        "Number of Units Produced: ", input$number_of_units_produced, "\n",
+        "Cycle Time Goal: ", input$cycle_time_goal, " minutes per unit\n",
+        "Total Scrap: ", input$total_scrap, "\n\n",
+        "Results:\n",
+        "Availability: ", round(oee_data$Value[1] * 100, 2), "%\n",
+        "Performance: ", round(oee_data$Value[2] * 100, 2), "%\n",
+        "Quality: ", round(oee_data$Value[3] * 100, 2), "%\n",
+        "Overall Equipment Effectiveness (OEE): ", round(oee_data$Value[4] * 100, 2), "%\n",
+        sep = ""
+      )
+      return(report_text)
+    }
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
