@@ -29,8 +29,6 @@ print("OEE")
 print(oee)
 
 
-# [Your existing code for OEE calculations]
-
 oee_data <- data.frame(
   Metric = c("Availability", "Performance", "Quality", "OEE"),
   Value = c(availability, performance, quality, oee)
